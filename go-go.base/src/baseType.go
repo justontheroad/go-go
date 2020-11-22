@@ -7,12 +7,12 @@ import (
 
 func main() {
 	// 整形
-	var i8 int8 = -128 // -128~127
-	var i16 int16 = -32768 // -32768~32767
-	var i32 int32 = -2147483648 // -2147483648~2147483647
-	var i64 int64 = -2147483648 // -2^64/2~2^64/2-1
-	var ui8 uint8 = 255 // 0~255
-	var ui16 uint16 = 65535 // 0~65535
+	var i8 int8 = -128           // -128~127
+	var i16 int16 = -32768       // -32768~32767
+	var i32 int32 = -2147483648  // -2147483648~2147483647
+	var i64 int64 = -2147483648  // -2^64/2~2^64/2-1
+	var ui8 uint8 = 255          // 0~255
+	var ui16 uint16 = 65535      // 0~65535
 	var ui32 uint32 = 4294967295 // 0~2147483649
 	var ui64 uint64 = 4294967295 // 0~2^64-1
 	fmt.Println(i8, i16, i32, i64, ui8, ui16, ui32, ui64)
@@ -23,7 +23,7 @@ func main() {
 	fmt.Println(f32, f64)
 
 	// 复数
-	var c64 complex64 = complex(1, 2) // 1+2i
+	var c64 complex64 = complex(1, 2)   // 1+2i
 	var c128 complex128 = complex(3, 4) // 3+4i
 	fmt.Println(c64, c128)
 
@@ -43,12 +43,12 @@ func main() {
 	// 字符串
 	var str string = "hello"
 	fmt.Println(str)
-	var str1 string         // 声明一个字符串变量
-	str1 = "Hello world"    // 字符串赋值
-	ch := str1[0]           // 取字符串的第一个字符
-	str2 := "Hello world"   // 直接初始化，推导为string类型
+	var str1 string       // 声明一个字符串变量
+	str1 = "Hello world"  // 字符串赋值
+	ch := str1[0]         // 取字符串的第一个字符
+	str2 := "Hello world" // 直接初始化，推导为string类型
 	// str2[0] = 'a'           // 编译错误，不支持初始化后修改内容
-	str1 = str1 + str2      // str1的值变为了Hello worldHello world
+	str1 = str1 + str2 // str1的值变为了Hello worldHello world
 	fmt.Println(ch, str1)
 
 	// 数组
@@ -61,11 +61,11 @@ func main() {
 	// fmt.Println(arr3)
 	// 切片
 	s1 := arr[1]
-	s2 := arr[2:5] // arr[2,3,4] 
+	s2 := arr[2:5] // arr[2,3,4]
 	fmt.Println(s1, s2)
 	// 字典
 	var kv map[string]string
-	kv = map[string]string {"aa": "test"}
+	kv = map[string]string{"aa": "test"}
 	fmt.Println(kv)
 	kv1 := make(map[string]string)
 	fmt.Println(kv)

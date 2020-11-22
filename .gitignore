@@ -1,1 +1,4 @@
 go-go.code-workspace
+.DS_Store
+go-go.base/.DS_Store
+.vscode/launch.json
