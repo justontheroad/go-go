@@ -2,20 +2,32 @@ package main
 
 import (
 	"fmt"
+	"math"
 	// "math/cmplx"
 )
 
 func main() {
 	// 整形
-	var i8 int8 = -128           // -128~127
-	var i16 int16 = -32768       // -32768~32767
-	var i32 int32 = -2147483648  // -2147483648~2147483647
-	var i64 int64 = -2147483648  // -2^64/2~2^64/2-1
-	var ui8 uint8 = 255          // 0~255
-	var ui16 uint16 = 65535      // 0~65535
-	var ui32 uint32 = 4294967295 // 0~2147483649
-	var ui64 uint64 = 4294967295 // 0~2^64-1
+	var i8 int8 = -128                     // -128~127
+	var i16 int16 = -32768                 // -32768~32767
+	var i32 int32 = -2147483648            // -2147483648~2147483647
+	var i64 int64 = -9223372036854775808   // -2^64/2~2^64/2-1
+	var ui8 uint8 = 255                    // 0~255
+	var ui16 uint16 = 65535                // 0~65535
+	var ui32 uint32 = 4294967295           // 0~2147483649
+	var ui64 uint64 = 18446744073709551615 // 0~2^64-1
 	fmt.Println(i8, i16, i32, i64, ui8, ui16, ui32, ui64)
+
+	// 输出各数值范围
+	fmt.Println("int8 range:", math.MinInt8, math.MaxInt8)
+	fmt.Println("int16 range:", math.MinInt16, math.MaxInt16)
+	fmt.Println("int32 range:", math.MinInt32, math.MaxInt32)
+	fmt.Println("int64 range:", math.MinInt64, math.MaxInt64)
+	// 输出各数值范围
+	fmt.Println("uint8 range:", 0, math.MaxUint8)
+	fmt.Println("uint16 range:", 0, math.MaxUint16)
+	fmt.Println("uint32 range:", 0, math.MaxUint32)
+	// fmt.Println("uint64 range:", 0, math.MaxUint64)
 
 	// 浮点形
 	var f32 float32 = 0.01
@@ -68,5 +80,5 @@ func main() {
 	kv = map[string]string{"aa": "test"}
 	fmt.Println(kv)
 	kv1 := make(map[string]string)
-	fmt.Println(kv)
+	fmt.Println(kv1)
 }

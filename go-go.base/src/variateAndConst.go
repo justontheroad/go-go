@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 )
 
 // 全局变量
@@ -56,6 +57,19 @@ func main() {
 		z, x = 1, 2
 	)
 	fmt.Println(z, x)
+
+	// 类型转换
+	var f = 5.0
+	ii := int(f)
+	// bb := bool(ii) // cannot convert ii (type int) to type bool
+	fmt.Println(f, ii, bb)
+	// 字符串转换
+	var ia = 66
+	sa := string(ia)       // 转换为B
+	ss := strconv.Itoa(ia) // 转换为数字字符串
+	var ba = false
+	sb := strconv.FormatBool(ba)
+	fmt.Println(ia, sa, ss, ba, sb)
 
 	fmt.Println(MIN, MAX)
 	fmt.Println(TEST1, TEST2)
