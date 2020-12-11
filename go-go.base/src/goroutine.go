@@ -91,12 +91,55 @@ func main() {
 	}
 	wg.Wait()
 
-	// test := incrementTest()
-	// for i := 0; i < 10; i++ {
-	// 	go func() {
-	// 		fmt.Println(test(1))
-	// 	}()
-	// }
+	// 互斥锁
+	// 缺少锁，最后count不一定等于2000000；多个goroutine可能同时操作非原子性的变量count
+	count := 0
+	var countLock sync.Mutex
+	for i := 0; i < 2; i++ {
+		go func() {
+			for i := 1000000; i > 0; i-- {
+				countLock.Lock()
+				count++
+				countLock.Unlock()
+			}
+			fmt.Println(count)
+		}()
+	}
+
+	// 读写锁
+	count = 1
+	var countGuard sync.RWMutex
+	read := func(m map[string]string) {
+		for {
+			// countGuard.Lock()
+			countGuard.RLock()
+			var _ string = m["name"]
+			count++
+			// countGuard.Unlock()
+			countGuard.RUnlock()
+		}
+	}
+	write := func(m map[string]string) {
+		for {
+			countGuard.Lock()
+			m["name"] = "johny"
+			count++
+			// time.Sleep(time.Millisecond * 3)
+			countGuard.Unlock()
+		}
+	}
+	var num int = 3
+	var mapA map[string]string = map[string]string{"nema": ""}
+
+	for i := 0; i < num; i++ {
+		go read(mapA)
+	}
+	for i := 0; i < num; i++ {
+		go write(mapA)
+	}
+	// 执行到此处，前面的goroutine被结束
+	time.Sleep(time.Second * 3)
+	fmt.Printf("最终读写次数：%d\n", count)
 
 	// select
 	// Channel timeout
@@ -121,14 +164,3 @@ func main() {
 	<-quit
 	fmt.Println("程序结束")
 }
-
-// func incrementTest() func(int) int {
-// 	// mutex.Lock()
-// 	// defer mutex.Unlock()
-// 	a := 1
-
-// 	return func(i int) int {
-// 		a = a + i
-// 		return a
-// 	}
-// }
