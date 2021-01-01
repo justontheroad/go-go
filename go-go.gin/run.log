@@ -1,0 +1,12 @@
+[GIN-debug] GET    /user/:name/*action       --> main.main.func2 (3 handlers)
+[GIN-debug] GET    /welcome                  --> main.main.func3 (3 handlers)
+[GIN-debug] POST   /user/:name/info          --> main.main.func4 (3 handlers)
+[GIN-debug] POST   /upload                   --> main.main.func5 (3 handlers)
+[GIN-debug] POST   /multi-upload             --> main.main.func6 (3 handlers)
+[GIN-debug] GET    /v1/hello                 --> main.main.func7 (3 handlers)
+[GIN-debug] GET    /v1/world                 --> main.main.func8 (3 handlers)
+[GIN-debug] GET    /v2/hello                 --> main.main.func9 (3 handlers)
+[GIN-debug] GET    /v2/world                 --> main.main.func10 (3 handlers)
+[GIN-debug] GET    /ping                     --> main.main.func11 (3 handlers)
+[GIN-debug] Environment variable PORT is undefined. Using port :8080 by default
+[GIN-debug] Listening and serving HTTP on :8080
