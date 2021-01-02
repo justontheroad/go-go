@@ -8,8 +8,21 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
+
+//用户模型
+type User struct {
+	UserName string `json:"user" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	// FirstName string `json:"fname"`
+	// LastName  string `json:"lname"`
+	// Age       uint8  `validate:"gte=0,lte=130"`
+	// Email     string `validate:"required,email"`
+}
 
 func main() {
 	// 禁用控制台颜色
@@ -37,6 +50,24 @@ func main() {
 	}))
 	// 使用Recovery中间件
 	r.Use(gin.Recovery())
+
+	// // var v *validator.Validate
+	// // v = validator.New(&validator.Config{TagName: "binding"})
+	// // v.RegisterValidation("bookabledate", bookableDate)
+
+	if ValidatorBooingRegister() {
+		r.GET("/bookable", func(c *gin.Context) {
+			var b Booking
+			if err := c.ShouldBindWith(&b, binding.Query); err == nil {
+				c.JSON(http.StatusOK, gin.H{"message": "Booking dates are valid!"})
+			} else {
+				errs := err.(validator.ValidationErrors)
+				c.JSON(http.StatusBadRequest, gin.H{"error": TransTagName(BookingTrans, errs.Translate(trans))})
+				// fmt.Println(errs.Translate(trans))
+				// c.JSON(http.StatusBadRequest, gin.H{"error": errs.Translate(trans)})
+			}
+		})
+	}
 
 	// 创建日志
 	f, _ := os.Create("run.log")
@@ -129,6 +160,42 @@ func main() {
 			c.String(http.StatusOK, "V2 Hello world")
 		})
 	}
+
+	r.POST("/must-login", func(c *gin.Context) {
+		var user User
+		// Bind方法中，binding.Default方法使用Content-Type推断出使用哪种绑定器
+		// if err := c.Bind(&user); err != nil {
+		if err := c.BindJSON(&user); err != nil {
+			// 设置了500错误码，最终输出400错误码，因为Bind方法底层调用MustBindWith方法
+			// 绑定存在错误时，调用AbortWithError(http.StatusBadRequest, err).SetType(ErrorTypeBind)，设置了400错误码
+			c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+			return
+		}
+
+		if user.UserName != "test" || user.Password != "123456" {
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
+	})
+
+	r.POST("/login", func(c *gin.Context) {
+		var user User
+		// ShouldBind方法中，binding.Default方法使用Content-Type推断出使用哪种绑定器
+		// if err := c.ShouldBind(&user); err != nil {
+		if err := c.ShouldBindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if user.UserName != "test" || user.Password != "123456" {
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
+	})
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{

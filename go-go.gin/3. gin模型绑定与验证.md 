@@ -1,0 +1,181 @@
+### Gin模型绑定与验证
+Gin使用 [go-playground/validator.v8](http://godoc.org/gopkg.in/go-playground/validator.v8) 验证参数，最新版本v10+
+
+验证参考：https://github.com/go-playground/validator/releases/tag/v8.7
+
+1. 在绑定的字段上设置tag
+    ```
+    //用户模型
+    type User struct {
+    	UserName string `json:"user" binding:"required`
+	    Password string `json:"password" binding:"required"`
+    }
+    ```
+2. 绑定方法Must bind
+   - Methods - Bind, BindJSON, BindXML, BindQuery, BindYAML；
+   - Behavior - 这些方法底层使用 MustBindWith，如果存在绑定错误，请求将被以下指令中止 c.AbortWithError(400, err).SetType(ErrorTypeBind)，响应状态代码会被设置为400，请求头Content-Type被设置为text/plain; charset=utf-8。注意，如果你试图在此之后设置响应代码，将会发出一个警告 [GIN-debug] [WARNING] Headers were already written. Wanted to override status code 400 with 422，如果你希望更好地控制行为，请使用ShouldBind相关的方法。
+   ```
+   r.POST("/must-login", func(c *gin.Context) {
+		var user User
+		// Bind方法中，binding.Default方法使用Content-Type推断出使用哪种绑定器
+		// if err := c.Bind(&user); err != nil {
+		if err := c.BindJSON(&user); err != nil {
+			// 设置了500错误码，最终输出400错误码，因为Bind方法底层调用MustBindWith方法
+			// 绑定存在错误时，调用AbortWithError(http.StatusBadRequest, err).SetType(ErrorTypeBind)，设置了400错误码
+			c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+			return
+		}
+
+		if user.UserName != "test" || user.Password != "123456" {
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
+	})
+   ```
+   ```
+   // 源码
+   func (c *Context) Bind(obj interface{}) error {
+    	b := binding.Default(c.Request.Method, c.ContentType())
+    	return c.MustBindWith(obj, b)
+    }
+    
+    func (c *Context) MustBindWith(obj interface{}, b binding.Binding) error {
+    	if err := c.ShouldBindWith(obj, b); err != nil {
+    		c.AbortWithError(http.StatusBadRequest, err).SetType(ErrorTypeBind) // nolint: errcheck
+    		return err
+    	}
+    	return nil
+    }
+    ```
+3. 绑定方法Should bind
+    - Methods - ShouldBind, ShouldBindJSON, ShouldBindXML, ShouldBindQuery, ShouldBindYAML；
+    - Behavior - 这些方法底层使用 ShouldBindWith，如果存在绑定错误，则返回错误，开发人员可以正确处理请求和错误。
+    ```
+    r.POST("/login", func(c *gin.Context) {
+	var user User
+		// ShouldBind方法中，binding.Default方法使用Content-Type推断出使用哪种绑定器
+	    // if err := c.ShouldBind(&user); err != nil {
+		if err := c.ShouldBindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if user.UserName != "test" || user.Password != "123456" {
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
+	})
+    ```
+    ```
+    // 源码
+    func (c *Context) ShouldBind(obj interface{}) error {
+    	b := binding.Default(c.Request.Method, c.ContentType())
+    	return c.ShouldBindWith(obj, b)
+    }
+    
+    func (c *Context) ShouldBindJSON(obj interface{}) error {
+    	return c.ShouldBindWith(obj, binding.JSON)
+    }
+    ```
+4. 自定义验证器 
+    validatorBooking.go
+    ```
+    package main
+
+    import (
+        "reflect"
+        "strings"
+        "time"
+
+        "github.com/gin-gonic/gin/binding"
+        "github.com/go-playground/locales/zh"
+        ut "github.com/go-playground/universal-translator"
+        "github.com/go-playground/validator/v10"
+        zh_translations "github.com/go-playground/validator/v10/translations/zh"
+    )
+
+    // Booking contains binded and validated data.
+    type Booking struct {
+        CheckIn  time.Time `form:"check_in" json:"check_in" binding:"required,bookabledate" time_format:"2006-01-02" label:"输入时间"`
+        CheckOut time.Time `form:"check_out" json:"check_out" binding:"required,gtfield=CheckIn" time_format:"2006-01-02" label:"输出时间"`
+    }
+
+    // 翻译器
+    var trans ut.Translator
+
+    // 预定日期验证方法
+    var bookableDate validator.Func = func(fl validator.FieldLevel) bool {
+        date, ok := fl.Field().Interface().(time.Time)
+        if ok {
+            today := time.Now()
+            if today.After(date) {
+                return false
+            }
+        }
+        return true
+    }
+
+    // CheckIn CheckOut翻译
+    var BookingTrans = map[string]string{"CheckIn": "输入时间", "CheckOut": "输出时间"}
+
+    // 翻译tag name
+    func TransTagName(libTans, err interface{}) interface{} {
+        switch err.(type) {
+        case validator.ValidationErrorsTranslations:
+            var errs map[string]string
+            errs = make(map[string]string, 0)
+            for k, v := range err.(validator.ValidationErrorsTranslations) {
+                for key, value := range libTans.(map[string]string) {
+                    v = strings.Replace(v, key, value, -1)
+                }
+                errs[k] = v
+            }
+            return errs
+        case string:
+            var errs string
+            for key, value := range libTans.(map[string]string) {
+                errs = strings.Replace(errs, key, value, -1)
+            }
+            return errs
+        default:
+            return err
+        }
+    }
+
+    // booking 验证器注册
+    func ValidatorBooingRegister() bool {
+        flag := false
+        uni := ut.New(zh.New())
+        trans, _ = uni.GetTranslator("zh")
+        // 2. 绑定自定义验证器，必须在router绑定handler之前处理
+        if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+            //注册翻译器
+            _ = zh_translations.RegisterDefaultTranslations(v, trans)
+            //注册自定义函数
+            _ = v.RegisterValidation("bookabledate", bookableDate)
+
+            //注册一个函数，获取struct tag里自定义的label作为字段名
+            v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+                name := fld.Tag.Get("label")
+                return name
+            })
+            //根据提供的标记注册翻译
+            v.RegisterTranslation("bookabledate", trans, func(ut ut.Translator) error {
+                return ut.Add("bookabledate", "{0}不能早于当前时间或{1}格式错误!", true)
+            }, func(ut ut.Translator, fe validator.FieldError) string {
+                t, _ := ut.T("bookabledate", fe.Field(), fe.Field())
+                return t
+            })
+
+            flag = true
+        }
+
+        return flag
+    }
+    ```
+
+> [golang之数据验证validator](https://blog.csdn.net/guyan0319/article/details/105918559)
