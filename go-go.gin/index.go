@@ -8,10 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-playground/validator/v10"
-
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 //用户模型
@@ -51,23 +48,20 @@ func main() {
 	// 使用Recovery中间件
 	r.Use(gin.Recovery())
 
-	// // var v *validator.Validate
-	// // v = validator.New(&validator.Config{TagName: "binding"})
-	// // v.RegisterValidation("bookabledate", bookableDate)
-
-	if ValidatorBooingRegister() {
-		r.GET("/bookable", func(c *gin.Context) {
-			var b Booking
-			if err := c.ShouldBindWith(&b, binding.Query); err == nil {
-				c.JSON(http.StatusOK, gin.H{"message": "Booking dates are valid!"})
-			} else {
-				errs := err.(validator.ValidationErrors)
-				c.JSON(http.StatusBadRequest, gin.H{"error": TransTagName(BookingTrans, errs.Translate(trans))})
-				// fmt.Println(errs.Translate(trans))
-				// c.JSON(http.StatusBadRequest, gin.H{"error": errs.Translate(trans)})
-			}
-		})
-	}
+	// 自定义验证器
+	// if ValidatorBooingRegister() {
+	// 	r.GET("/bookable", func(c *gin.Context) {
+	// 		var b Booking
+	// 		if err := c.ShouldBindWith(&b, binding.Query); err == nil {
+	// 			c.JSON(http.StatusOK, gin.H{"message": "Booking dates are valid!"})
+	// 		} else {
+	// 			errs := err.(validator.ValidationErrors)
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": TransTagName(BookingTrans, errs.Translate(trans))})
+	// 			// fmt.Println(errs.Translate(trans))
+	// 			// c.JSON(http.StatusBadRequest, gin.H{"error": errs.Translate(trans)})
+	// 		}
+	// 	})
+	// }
 
 	// 创建日志
 	f, _ := os.Create("run.log")
@@ -195,6 +189,19 @@ func main() {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
+	})
+
+	r.GET("/test/middle", CustomRouterMiddleware, CustomRouterMiddleware, func(c *gin.Context) {
+		// 取值，CustomRouterMiddleware中间件定义的变量example
+		req, _ := c.Get("example")
+
+		c.JSON(200, gin.H{"request": req})
+	})
+
+	r.GET("/test/middle-abort", FirstMiddleware, SecondMiddleware, func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "ok",
+		})
 	})
 
 	r.GET("/ping", func(c *gin.Context) {
