@@ -12,6 +12,7 @@
 [GIN-debug] POST   /login                    --> main.main.func13 (3 handlers)
 [GIN-debug] GET    /test/middle              --> main.main.func14 (5 handlers)
 [GIN-debug] GET    /test/middle-abort        --> main.main.func15 (5 handlers)
-[GIN-debug] GET    /ping                     --> main.main.func16 (3 handlers)
+[GIN-debug] GET    /show-async               --> main.main.func16 (3 handlers)
+[GIN-debug] GET    /ping                     --> main.main.func17 (3 handlers)
 [GIN-debug] Environment variable PORT is undefined. Using port :8080 by default
 [GIN-debug] Listening and serving HTTP on :8080
