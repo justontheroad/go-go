@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -47,6 +48,10 @@ func main() {
 	}))
 	// 使用Recovery中间件
 	r.Use(gin.Recovery())
+
+	if ctx, ok := reflect.TypeOf(&User{}).Elem().FieldByName("UserName"); ok {
+		fmt.Println(ctx.Tag)
+	}
 
 	// 自定义验证器
 	// if ValidatorBooingRegister() {
