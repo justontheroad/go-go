@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+// option go_package = "github.com/justontheroad/go-go/go-go.grpc/searchgoods";
+
+package searchgoods;
+
+service SearchGoods {
+    rpc Search(SearchRequest) returns (SearchResponse) {}
+
+    rpc List(SearchRequest) returns (stream SearchResponse) {}
+
+    rpc Record(stream SearchRequest) returns (SearchResponse) {}
+
+    rpc Route(stream SearchRequest) returns (stream SearchResponse) {}
+}
+
+message SearchRequest {
+    // required string sku  = 1; // Required fields are not allowed in proto3.
+    // This file contains proto3 optional fields, but --experimental_allow_proto3_optional was not set.
+    optional string sku  = 1;
+    optional int32 id = 2;
+}
+
+message SearchResponse {
+    int32  id   = 1;
+    string sku  = 2;
+    string name = 3;
+}
