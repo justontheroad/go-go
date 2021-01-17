@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+// option go_package = "github.com/justontheroad/go-go/go-go.grpc/routeguide";
+
+package routeguide;
+
+service RouteGuide {
+
+    rpc GetFeature(Point) returns (Feature) {}
+
+    rpc ListFeatures(Rectangle) returns (stream Feature) {}
+
+    rpc RecordRoute(stream Point) returns (RouteSummary) {}
+
+    rpc RouteChat(stream RouteNote) returns (stream RouteNote) {}
+}
+
+message Point {
+    int32 latitude = 1;
+    int32 longitude = 2;
+}
+
+message Rectangle {
+    // One corner of the rectangle.
+    Point lo = 1;
+
+    // The other corner of the rectangle.
+    Point hi = 2;
+}
+
+message Feature {
+    // The name of the feature.
+    string name = 1;
+  
+    // The point where the feature is detected.
+    Point location = 2;
+}
+
+message RouteNote {
+    // The location from which the message is sent.
+    Point location = 1;
+  
+    // The message to be sent.
+    string message = 2;
+}
+
+message RouteSummary {
+    // The number of points received.
+    int32 point_count = 1;
+  
+    // The number of known features passed while traversing the route.
+    int32 feature_count = 2;
+  
+    // The distance covered in metres.
+    int32 distance = 3;
+  
+    // The duration of the traversal in seconds.
+    int32 elapsed_time = 4;
+}
