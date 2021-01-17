@@ -46,6 +46,10 @@ func (c *MysqlConnect) checkDb() (err error) {
 		err = errors.New("db 连接异常")
 		return
 	}
+	// 检查数据库是否可用和可访问
+	if err = c.db.Ping(); nil != err {
+		return
+	}
 	err = nil
 	return
 }
