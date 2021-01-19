@@ -35,7 +35,7 @@ func GetRdb(client *RedisClient) {
 	}
 }
 
-//Get获取
+//Get 获取
 func (rc *RedisClient) Get(key string) (val string, err error) {
 	val, err = rc.rdb.Get(redisCtx, key).Result()
 	switch {
@@ -50,7 +50,7 @@ func (rc *RedisClient) Get(key string) (val string, err error) {
 	return
 }
 
-//Set设置
+//Set 设置
 func (rc *RedisClient) Set(key string, value string, ttl time.Duration) {
 	rc.rdb.Set(redisCtx, key, value, ttl)
 }
