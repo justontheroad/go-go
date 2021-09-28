@@ -106,12 +106,3 @@ Iris 是一个用 Go 编写的快速，简单但功能齐全且非常高效的 W
 		})
     })
     ```
-6. 获取Get参数、Post参数
-    ```
-    ```
-7. 路由分组
-    ```
-
-    ```
-
-> [gin github](https://github.com/gin-gonic/gin)
