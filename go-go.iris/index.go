@@ -10,7 +10,23 @@ func main() {
 	app := iris.Default()
 	// custom middleware
 	app.Use(myMiddleware)
-	app.Get("/", index)
+	// Use 和 Done 应用于当前路由分组和它的子分组，即在调用 Use 或 Done 之前的路由，不会应用该中间件
+	app.Get("/home", indexHandler)
+	app.Use(before)
+	app.Done(after)
+	// 在路由注册前使用 `app.Use/Done，使用 UseGlobal/DoneGlobal
+	// app.UseGlobal(before)
+	// app.DoneGlobal(after)
+	app.Get("/main", mainHandler)
+	// app.Get("/main", before, mainHandler, after)
+	// 使用 ExecutionRules 去强制执行完成的处理程序，而不需要使用ctx.Next()
+	// app.SetExecutionRules(iris.ExecutionRules{
+	// 	// Begin: ...
+	// 	// Main:  ...
+	// 	Done: iris.ExecutionOptions{Force: true},
+	// })
+
+	app.Get("/", indexHandler).Name = "Index"
 
 	app.Get("/assets/{asset:path}", func(ctx iris.Context) {
 		ctx.JSON(ctx.Params().Get("asset"))
@@ -62,7 +78,7 @@ func main() {
 	app.Patch("/", handler)
 
 	// 注册支持所有 HTTP 方法的路由
-	app.Any("/", handler)
+	// app.Any("/", handler)
 
 	none := app.None("/invisible/{username}", func(ctx iris.Context) {
 		ctx.Writef("Hello %s with method: %s", ctx.Params().Get("username"), ctx.Method())
@@ -117,10 +133,37 @@ func main() {
 	})
 
 	// app.Listen(":8080")
-	app.Run(iris.Addr(":8080"), iris.WithoutPathCorrectionRedirection)
+	// 行为
+	// app.Run(iris.Addr(":8080"), iris.WithoutPathCorrection) // 对请求的资源 禁用路径校正
+	app.Run(iris.Addr(":8080"), iris.WithoutPathCorrectionRedirection) // 禁用路径校正和修正重定向
 }
 
-func index(ctx iris.Context) {
+func before(ctx iris.Context) {
+	info := "Welcome"
+	requestPath := ctx.Path()
+	println("Before the mainHandler: " + requestPath)
+
+	ctx.Values().Set("info", info)
+	ctx.Next()
+}
+
+func after(ctx iris.Context) {
+	println("After the mainHandler")
+}
+
+func mainHandler(ctx iris.Context) {
+	println("Inside mainHandler")
+
+	info := ctx.Values().GetString("info")
+
+	// 向客户端写一些内容作为响应。
+	ctx.HTML("<h1>Response</h1>")
+	ctx.HTML("<br/> Info: " + info)
+
+	ctx.Next() // 执行 "after" 中间件
+}
+
+func indexHandler(ctx iris.Context) {
 	ctx.JSON(iris.Map{
 		"message": "hello",
 	})
