@@ -106,3 +106,50 @@ Iris 是一个用 Go 编写的快速，简单但功能齐全且非常高效的 W
 		})
     })
     ```
+6. 配置
+    - app.Run 方法的第二个可选参数接受一个或者多个 iris.Configurator。一个 iris.Configurator 只是一个 func(app *iris.Application)类型。也可以传递自定义 iris.Configurator 来修改你的 *iris.Application
+    - 每个核心的 配置 的字段都有内置的 iris.Configurator， 例如 iris.WithoutStartupLog， iris.WithCharset("UTF-8")，iris.WithOptimizations 和 iris.WithConfiguration(iris.Configuration{...}) 方法
+    1. 配置使用
+        ```
+        config := iris.WithConfiguration(iris.Configuration {
+            DisableStartupLog: true,
+            Optimizations: true,
+            Charset: "UTF-8",
+        })
+
+        app.Run(iris.Addr(":8080"), config)
+        ```
+    2. 从 YAML 中加载配置
+        ```
+        config := iris.WithConfiguration(iris.YAML("./iris.yml"))
+        app.Run(iris.Addr(":8080"), config)
+        ```
+    3. 从 TOML 中加载配置
+        ```
+        config := iris.WithConfiguration(iris.TOML("./iris.tml"))
+        app.Run(iris.Addr(":8080"), config)
+        ```
+    4. 使用方法方式
+        - 在 app.Run 的第二个参数中，可以传递任意数量的 iris.Configurator 。 Iris 为每个 iris.Configuration 的字段提供了相应选项。
+        ```
+        app.Run(iris.Addr(":8080"), iris.WithoutInterruptHandler,
+            iris.WithoutServerError(iris.ErrServerClosed),
+            iris.WithoutBodyConsumptionOnUnmarshal,
+            iris.WithoutAutoFireStatusCode,
+            iris.WithOptimizations,
+            iris.WithTimeFormat("Mon, 01 Jan 2006 15:04:05 GMT"),
+        )
+        ```
+    5. 自定义
+        - iris.Configuration 包含一个名为 Other map[string]interface{} 的字段， 该字段接受任何自定义的 key:value 选项
+        ```
+        app.Run(iris.Addr(":8080"), 
+            iris.WithOtherValue("ServerName", "my amazing iris server"),
+            iris.WithOtherValue("ServerOwner", "admin@example.com"),
+        )
+        ```
+        - 可以通过 app.ConfigurationReadOnly 访问这些字段
+        ```
+        serverName := app.ConfigurationReadOnly().Other["MyServerName"]
+        serverOwner := app.ConfigurationReadOnly().Other["ServerOwner"]
+        ```

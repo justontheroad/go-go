@@ -1,7 +1,17 @@
 package main
 
 import (
+	"net/http"
+	"reflect"
+	"strings"
+
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/context"
+	"github.com/kataras/iris/v12/core/errgroup"
+)
+
+var (
+	g errgroup.Error
 )
 
 func main() {
@@ -9,15 +19,15 @@ func main() {
 	// logger and recovery (crash-free) middleware
 	app := iris.Default()
 	// custom middleware
-	app.Use(myMiddleware)
+	app.Use(MyMiddleware)
 	// Use 和 Done 应用于当前路由分组和它的子分组，即在调用 Use 或 Done 之前的路由，不会应用该中间件
-	app.Get("/home", indexHandler)
-	app.Use(before)
-	app.Done(after)
+	app.Get("/home", IndexHandler)
+	app.Use(Before)
+	app.Done(After)
 	// 在路由注册前使用 `app.Use/Done，使用 UseGlobal/DoneGlobal
 	// app.UseGlobal(before)
 	// app.DoneGlobal(after)
-	app.Get("/main", mainHandler)
+	app.Get("/main", MainHandler)
 	// app.Get("/main", before, mainHandler, after)
 	// 使用 ExecutionRules 去强制执行完成的处理程序，而不需要使用ctx.Next()
 	// app.SetExecutionRules(iris.ExecutionRules{
@@ -26,7 +36,7 @@ func main() {
 	// 	Done: iris.ExecutionOptions{Force: true},
 	// })
 
-	app.Get("/", indexHandler).Name = "Index"
+	app.Get("/", IndexHandler).Name = "Index"
 
 	app.Get("/assets/{asset:path}", func(ctx iris.Context) {
 		ctx.JSON(ctx.Params().Get("asset"))
@@ -46,39 +56,39 @@ func main() {
 		})
 	})
 
-	app.Get("{root:path}", func(ctx iris.Context) {
-		root := ctx.Params().Get("root")
-		ctx.JSON(iris.Map{
-			"root": root,
-		})
-	})
+	// app.Get("{root:path}", func(ctx iris.Context) {
+	// 	root := ctx.Params().Get("root")
+	// 	ctx.JSON(iris.Map{
+	// 		"root": root,
+	// 	})
+	// })
 
 	// 方法: "POST"
-	app.Post("/", handler)
+	app.Post("/", CustomHandler)
 
 	// 方法: "PUT"
-	app.Put("/", handler)
+	app.Put("/", CustomHandler)
 
 	// 方法: "DELETE"
-	app.Delete("/", handler)
+	app.Delete("/", CustomHandler)
 
 	// 方法: "OPTIONS"
-	app.Options("/", handler)
+	app.Options("/", CustomHandler)
 
 	// 方法: "TRACE"
-	app.Trace("/", handler)
+	app.Trace("/", CustomHandler)
 
 	// 方法: "CONNECT"
-	app.Connect("/", handler)
+	app.Connect("/", CustomHandler)
 
 	// 方法: "HEAD"
-	app.Head("/", handler)
+	app.Head("/", CustomHandler)
 
 	// 方法: "PATCH"
-	app.Patch("/", handler)
+	app.Patch("/", CustomHandler)
 
 	// 注册支持所有 HTTP 方法的路由
-	// app.Any("/", handler)
+	// app.Any("/", CustomHandler)
 
 	none := app.None("/invisible/{username}", func(ctx iris.Context) {
 		ctx.Writef("Hello %s with method: %s", ctx.Params().Get("username"), ctx.Method())
@@ -119,69 +129,86 @@ func main() {
 	})
 
 	// 分组
-	users := app.Party("/users", myMiddleware)
+	users := app.Party("/users", MyMiddleware)
 	// http://localhost:8080/users/42/profile
-	users.Get("/{id:uint64}/profile", userProfileHandler)
+	users.Get("/{id:uint64}/profile", UserProfileHandler)
 	// http://localhost:8080/users/messages/1
-	users.Get("/messages/{id:uint64}", userMessageHandler)
+	users.Get("/messages/{id:uint64}", UserMessageHandler)
 
 	app.PartyFunc("admins", func(admins iris.Party) {
 		// http://localhost:8080/admins/42/profile
-		admins.Get("/{id:uint64}/profile", userProfileHandler)
+		admins.Get("/{id:uint64}/profile", UserProfileHandler)
 		// http://localhost:8080/admins/messages/1
-		admins.Get("/messages/{id:uint64}", userMessageHandler)
+		admins.Get("/messages/{id:uint64}", UserMessageHandler)
+	})
+
+	// 注册 view
+	app.RegisterView(iris.HTML("./views", ".html"))
+
+	// 错误处理
+	app.OnErrorCode(iris.StatusNotFound, NotFound)
+	app.OnErrorCode(iris.StatusInternalServerError, InternalServerError)
+	// 为所有“错误”注册一个处理程序
+	// 状态代码(kataras/iris/context.StatusCodeNotSuccessful)
+	// app.OnAnyErrorCode(errorHandler)
+
+	// 用本地 net/http 处理程序包装路由器。
+	app.WrapRouter(func(w http.ResponseWriter, r *http.Request, router http.HandlerFunc) {
+		path := r.URL.Path
+		// 判断路由前缀
+		if strings.HasPrefix(path, "/other") {
+			// 获取并释放上下文以便使用它来执行
+			ctx := app.ContextPool.Acquire(w, r)
+			OtherHandler(ctx)
+			app.ContextPool.Release(ctx)
+			return
+		}
+
+		// 否则继续照常服务路由。
+		router.ServeHTTP(w, r)
 	})
 
 	// app.Listen(":8080")
 	// 行为
 	// app.Run(iris.Addr(":8080"), iris.WithoutPathCorrection) // 对请求的资源 禁用路径校正
-	app.Run(iris.Addr(":8080"), iris.WithoutPathCorrectionRedirection) // 禁用路径校正和修正重定向
-}
+	// app.Run(iris.Addr(":8080"), iris.WithoutPathCorrectionRedirection) // 禁用路径校正和修正重定向
 
-func before(ctx iris.Context) {
-	info := "Welcome"
-	requestPath := ctx.Path()
-	println("Before the mainHandler: " + requestPath)
-
-	ctx.Values().Set("info", info)
-	ctx.Next()
-}
-
-func after(ctx iris.Context) {
-	println("After the mainHandler")
-}
-
-func mainHandler(ctx iris.Context) {
-	println("Inside mainHandler")
-
-	info := ctx.Values().GetString("info")
-
-	// 向客户端写一些内容作为响应。
-	ctx.HTML("<h1>Response</h1>")
-	ctx.HTML("<br/> Info: " + info)
-
-	ctx.Next() // 执行 "after" 中间件
-}
-
-func indexHandler(ctx iris.Context) {
-	ctx.JSON(iris.Map{
-		"message": "hello",
+	customApp := iris.New()
+	customApp.ContextPool.Attach(func() iris.Context {
+		return &CustomContext{
+			// 如果你要使用嵌入式 Context,
+			// 调用 `context.NewContext` 创建一个：
+			Context: context.NewContext(customApp),
+		}
 	})
+
+	//  在 ./view/** 目录中的 .html 文件上注册视图引擎
+	customApp.RegisterView(iris.HTML("./views", ".html"))
+
+	customApp.Handle("GET", "/", recordWhichContextForExample,
+		func(ctx iris.Context) {
+			// 使用 覆盖过的 Context 的 HTML 方法。
+			ctx.HTML("<h1> Hello from my custom context's HTML! </h1>")
+		})
+
+	customApp.Handle("GET", "/hi/{firstname:alphabetical}", recordWhichContextForExample,
+		func(ctx iris.Context) {
+			// firstname := ctx.Values().GetString("firstname")
+			firstname := ctx.Params().GetString("firstname")
+			ctx.ViewData("firstname", firstname)
+			ctx.Gzip(true)
+
+			ctx.View("hi.html")
+		})
+
+	// listen 阻塞代码，多端口监听需要使用 coroutine
+	go app.Run(iris.Addr(":8080"), iris.WithoutPathCorrectionRedirection) // 禁用路径校正和修正重定向
+	customApp.Listen(":8888")
 }
 
-func myMiddleware(ctx iris.Context) {
-	ctx.Application().Logger().Infof("Runs before %s", ctx.Path())
+func recordWhichContextForExample(ctx iris.Context) {
+	ctx.Application().Logger().Infof("(%s) Handler is executing from: '%s'",
+		ctx.Path(), reflect.TypeOf(ctx).Elem().Name())
+
 	ctx.Next()
-}
-
-func handler(ctx iris.Context) {
-	ctx.Writef("Hello from method: %s and path: %s\n", ctx.Method(), ctx.Path())
-}
-
-func userProfileHandler(ctx iris.Context) {
-	ctx.Writef("user %s profile\n", ctx.Params().Get("id"))
-}
-
-func userMessageHandler(ctx iris.Context) {
-	ctx.Writef("user %s messge\n", ctx.Params().Get("id"))
 }
