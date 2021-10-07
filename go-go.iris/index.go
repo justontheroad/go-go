@@ -201,6 +201,10 @@ func main() {
 			ctx.View("hi.html")
 		})
 
+	app.Get("/secret", Secret)
+	app.Post("/login", Login)
+	app.Post("/logout", Logout)
+
 	// listen 阻塞代码，多端口监听需要使用 coroutine
 	go app.Run(iris.Addr(":8080"), iris.WithoutPathCorrectionRedirection) // 禁用路径校正和修正重定向
 	customApp.Listen(":8888")
