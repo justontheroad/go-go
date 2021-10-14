@@ -13,6 +13,7 @@ require (
 	github.com/aymerick/raymond v2.0.3-0.20180322193309-b565731e1464+incompatible // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
+	github.com/gomodule/redigo v1.7.1-0.20190724094224-574c33c3df38 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/iris-contrib/blackfriday v2.0.0+incompatible // indirect
@@ -25,6 +26,7 @@ require (
 	github.com/kataras/pio v0.0.2 // indirect
 	github.com/kataras/sitemap v0.0.5 // indirect
 	github.com/klauspost/compress v1.13.4 // indirect
+	github.com/mediocregopher/radix/v3 v3.4.2 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
@@ -44,6 +46,7 @@ require (
 	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
 	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015 // indirect
 	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect

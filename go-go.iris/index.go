@@ -8,6 +8,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/context"
 	"github.com/kataras/iris/v12/core/errgroup"
+	"github.com/kataras/iris/v12/sessions"
 )
 
 var (
@@ -201,8 +202,19 @@ func main() {
 			ctx.View("hi.html")
 		})
 
+	// 当执行 control+C/cmd+C  时关闭连接
+	iris.RegisterOnInterrupt(func() {
+		sessRedisDb.Close()
+	})
+
+	// 3. session 注册 reids db支持
+	sess.UseDatabase(sessRedisDb)
+	app.Use(sess.Handler())
 	app.Get("/secret", Secret)
-	app.Post("/login", Login)
+	app.Post("/login", Login, func(ctx iris.Context) {
+		session := sessions.Get(ctx)
+		ctx.Application().Logger().Info(session.GetBoolean("authenticated"))
+	})
 	app.Post("/logout", Logout)
 
 	// listen 阻塞代码，多端口监听需要使用 coroutine

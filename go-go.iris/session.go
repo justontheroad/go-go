@@ -1,15 +1,33 @@
 package main
 
 import (
+	"time"
+
 	"github.com/kataras/iris/v12"
 
 	"github.com/kataras/iris/v12/sessions"
+
+	// 1. 引入 session 数据库。
+	"github.com/kataras/iris/v12/sessions/sessiondb/redis"
 )
 
 var (
 	cookieNameForSessionID = "mycookiesessionnameid"
-	sess                   = sessions.New(sessions.Config{Cookie: cookieNameForSessionID})
-	users                  = map[string]string{"test": "123456", "test2": "456789"}
+	// sessions 管理的 Config.AllowReclaim 是 true，仍可以在同一请求生命周期中多次调用 sess.Start 的同时，不需要将其注册为中间件。
+	sess        = sessions.New(sessions.Config{Cookie: cookieNameForSessionID, AllowReclaim: true})
+	users       = map[string]string{"test": "123456", "test2": "456789"}
+	sessRedisDb = redis.New(redis.Config{
+		Network:   "tcp",
+		Addr:      "10.38.2.56:26386",
+		Clusters:  []string{},
+		Password:  "",
+		Database:  "3",
+		MaxActive: 10,
+		Timeout:   time.Duration(30) * time.Second,
+		Prefix:    "",
+		Delim:     "-",
+		Driver:    redis.Redigo(),
+	})
 )
 
 func Secret(ctx iris.Context) {
@@ -56,6 +74,8 @@ func Login(ctx iris.Context) {
 	session.Set("authenticated", true)
 	session.Set("logined", true)
 	ctx.WriteString("Logined")
+
+	ctx.Next()
 }
 
 func Logout(ctx iris.Context) {
