@@ -8,6 +8,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/context"
 	"github.com/kataras/iris/v12/core/errgroup"
+	"github.com/kataras/iris/v12/hero"
 	"github.com/kataras/iris/v12/sessions"
 )
 
@@ -207,7 +208,7 @@ func main() {
 		sessRedisDb.Close()
 	})
 
-	// 3. session 注册 reids db支持
+	// 3. session 注册 redis db
 	sess.UseDatabase(sessRedisDb)
 	app.Use(sess.Handler())
 	app.Get("/secret", Secret)
@@ -216,6 +217,29 @@ func main() {
 		ctx.Application().Logger().Info(session.GetBoolean("authenticated"))
 	})
 	app.Post("/logout", Logout)
+
+	// DI 路径参数-内置依赖项
+	sayHelloHandler := hero.Handler(func(to string) string {
+		return "hello " + to
+	})
+	app.Get("/sayHello/{to:string}", sayHelloHandler)
+	// DI 服务-静态依赖性
+	hero.Register(&testHelloService{
+		prefix: "Service say hello,",
+	})
+	sayHelloHandler2 := hero.Handler(func(to string, s HelloService) string {
+		return s.SayHello(to)
+	})
+	app.Get("/sayHello2/{to:string}", sayHelloHandler2)
+	// DI 每个请求-动态依赖关系
+	hero.Register(func(ctx iris.Context) (form LoginForm) {
+		ctx.ReadForm(&form)
+		return
+	})
+	loginHandler := hero.Handler(func(form LoginForm) string {
+		return "hello " + form.Username
+	})
+	app.Post("/testLogin", loginHandler)
 
 	// listen 阻塞代码，多端口监听需要使用 coroutine
 	go app.Run(iris.Addr(":8080"), iris.WithoutPathCorrectionRedirection) // 禁用路径校正和修正重定向
@@ -227,4 +251,21 @@ func recordWhichContextForExample(ctx iris.Context) {
 		ctx.Path(), reflect.TypeOf(ctx).Elem().Name())
 
 	ctx.Next()
+}
+
+type HelloService interface {
+	SayHello(to string) string
+}
+
+type testHelloService struct {
+	prefix string
+}
+
+func (s *testHelloService) SayHello(to string) string {
+	return s.prefix + " " + to
+}
+
+type LoginForm struct {
+	Username string `form:"username"`
+	Password string `form:"password"`
 }
