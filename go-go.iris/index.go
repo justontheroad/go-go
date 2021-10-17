@@ -9,6 +9,7 @@ import (
 	"github.com/kataras/iris/v12/context"
 	"github.com/kataras/iris/v12/core/errgroup"
 	"github.com/kataras/iris/v12/hero"
+	"github.com/kataras/iris/v12/mvc"
 	"github.com/kataras/iris/v12/sessions"
 )
 
@@ -240,6 +241,12 @@ func main() {
 		return "hello " + form.Username
 	})
 	app.Post("/testLogin", loginHandler)
+
+	// MVC
+	// mvc.New(app.Party("/mvc")).Handle(new(ExampleController))
+	mvc.Configure(app.Party("/mvc"), func(a *mvc.Application) {
+		a.Handle(new(ExampleController))
+	})
 
 	// listen 阻塞代码，多端口监听需要使用 coroutine
 	go app.Run(iris.Addr(":8080"), iris.WithoutPathCorrectionRedirection) // 禁用路径校正和修正重定向
